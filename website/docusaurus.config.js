@@ -49,6 +49,11 @@ const config = {
             },
             '0.5.0': {
               label: '0.5.0',
+              // Docusaurus banners every non-latest version as "no longer
+              // actively maintained". 0.5.0 is the current release — the
+              // version people are actually running — so that warning would
+              // be wrong. Older tags keep the default banner.
+              banner: 'none',
             },
             '0.4.0': {
               label: '0.4.0',
