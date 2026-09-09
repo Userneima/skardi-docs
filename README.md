@@ -26,8 +26,9 @@ npm ci
 SKARDI_ROOT=/path/to/skardi npm run build && npm run serve
 ```
 
-It defaults to a sibling `../skardi` directory, so a checkout next to this repo
-needs no environment variable. Use `npm run start` for live reload. The
+The default is a `skardi` checkout sitting next to this repo — from inside
+`website/` that is `../../skardi`, so the variable above is only needed when
+your checkout lives elsewhere. Use `npm run start` for live reload. The
 generator fails loudly if the README headings or `docs/` paths it expects have
 moved — that is deliberate: it used to return an empty string instead, which
 produced a full set of empty pages and reported success.

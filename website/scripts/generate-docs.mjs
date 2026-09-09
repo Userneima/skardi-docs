@@ -244,10 +244,22 @@ function rewriteContent(content, sourceDir) {
   return content;
 }
 
-function write(relPath, frontmatter, body) {
+// Pages are generated from the skardi repo, so "Edit this page" has to point
+// there. The site-wide editUrl used to aim at skardi/website/, a path that has
+// never existed in that repo — every edit link 404'd. Each page now carries its
+// own source; the stubs below carry none, and frozen snapshots get no link.
+const GH_BLOB = 'https://github.com/SkardiLabs/skardi/blob/main';
+
+function write(relPath, frontmatter, body, editSource) {
+  if (!editSource) {
+    MISSING.push(`edit source for ${relPath}`);
+  }
+  const fm = editSource
+    ? `${frontmatter}\ncustom_edit_url: ${GH_BLOB}/${editSource}`
+    : frontmatter;
   const full = join(DEST, relPath);
   mkdirSync(dirname(full), { recursive: true });
-  writeFileSync(full, `---\n${frontmatter}\n---\n\n${body.trim()}\n`);
+  writeFileSync(full, `---\n${fm}\n---\n\n${body.trim()}\n`);
   console.log(`  wrote ${relPath}`);
 }
 
@@ -384,14 +396,15 @@ write(
     '- [Pipelines](/docs/pipelines) — what the loop promotes into.',
     '- [Data sources](/docs/data-sources/overview) — everything you can register.',
   ].join('\n'),
+  'README.md',
 );
 
-write('install.md', 'sidebar_position: 2\ntitle: Install', `# Install\n\n${section('Install')}`);
-write('cli.md', 'sidebar_position: 3\ntitle: Skardi CLI', `# Skardi CLI\n\n${loadAndTransform('docs/cli.md')}`);
-write('server.md', 'sidebar_position: 4\ntitle: Skardi Server', `# Skardi Server\n\n${loadAndTransform('docs/server.md')}`);
-write('pipelines.md', 'sidebar_position: 5\ntitle: Pipelines', `# Pipelines\n\n${loadAndTransform('docs/pipelines.md')}`);
-write('jobs.md', 'sidebar_position: 6\ntitle: Offline Jobs', `# Offline Jobs\n\n${loadAndTransform('docs/jobs.md')}`);
-write('mcp.md', 'sidebar_position: 7\ntitle: MCP Binding', `# MCP Binding\n\n${loadAndTransform('docs/mcp.md')}`);
+write('install.md', 'sidebar_position: 2\ntitle: Install', `# Install\n\n${section('Install')}`, 'README.md');
+write('cli.md', 'sidebar_position: 3\ntitle: Skardi CLI', `# Skardi CLI\n\n${loadAndTransform('docs/cli.md')}`, 'docs/cli.md');
+write('server.md', 'sidebar_position: 4\ntitle: Skardi Server', `# Skardi Server\n\n${loadAndTransform('docs/server.md')}`, 'docs/server.md');
+write('pipelines.md', 'sidebar_position: 5\ntitle: Pipelines', `# Pipelines\n\n${loadAndTransform('docs/pipelines.md')}`, 'docs/pipelines.md');
+write('jobs.md', 'sidebar_position: 6\ntitle: Offline Jobs', `# Offline Jobs\n\n${loadAndTransform('docs/jobs.md')}`, 'docs/jobs.md');
+write('mcp.md', 'sidebar_position: 7\ntitle: MCP Binding', `# MCP Binding\n\n${loadAndTransform('docs/mcp.md')}`, 'docs/mcp.md');
 
 writeRaw('data-sources/_category_.json', JSON.stringify({ label: 'Data Sources', position: 8 }, null, 2) + '\n');
 writeRaw('features/_category_.json', JSON.stringify({ label: 'Features', position: 9 }, null, 2) + '\n');
@@ -401,6 +414,7 @@ write(
   'architecture.md',
   'sidebar_position: 11\ntitle: Architecture',
   `# Architecture\n\n${underneath('prose')}\n\n${detailsBlock('Architecture diagram')}`,
+  'README.md',
 );
 // The trailing section keeps `#building-from-source` resolvable: older
 // snapshots link to /docs/docker#building-from-source, absolute /docs/ links
@@ -409,11 +423,13 @@ write(
   'docker.md',
   'sidebar_position: 12\ntitle: Docker & Cloud',
   `# Docker & Cloud\n\n${detailsBlock('Docker & cloud')}\n\n## Building from source\n\nSource builds moved to [Install](/docs/install), which covers the CLI, the\nserver, and which feature flags each one needs.`,
+  'README.md',
 );
 write(
   'community.md',
   'sidebar_position: 13\ntitle: Community & Security',
   `# Community\n\n${section('Community')}\n\n## Security\n\n${section('Security')}\n\n## License\n\n${section('License')}`,
+  'README.md',
 );
 
 // ---------- Data sources ----------
@@ -421,6 +437,7 @@ write(
   'data-sources/overview.md',
   'sidebar_position: 1\ntitle: Overview',
   `# Supported Data Sources\n\n${underneath('table')}`,
+  'README.md',
 );
 
 const dataSources = [
@@ -444,6 +461,7 @@ dataSources.forEach(([slug, title, src], i) => {
     `data-sources/${slug}.md`,
     `sidebar_position: ${i + 2}\ntitle: ${title}`,
     `# ${title}\n\n${loadAndTransform(src)}`,
+    src,
   );
 });
 
@@ -452,12 +470,14 @@ write(
   'data-sources/open-connector.md',
   `sidebar_position: ${ocBase}\ntitle: Open Connector`,
   `# Open Connector\n\n${loadAndTransform('docs/open-connector.md')}`,
+  'docs/open-connector.md',
 );
 OC_PACKS.forEach(([slug, title], i) => {
   write(
     `data-sources/open-connector-${slug}.md`,
     `sidebar_position: ${ocBase + 1 + i}\ntitle: Open Connector — ${title}`,
     `# Open Connector — ${title}\n\n${loadAndTransform(`docs/open-connector-${slug}.md`)}`,
+    `docs/open-connector-${slug}.md`,
   );
 });
 
@@ -475,7 +495,7 @@ const features = [
   ['auth', 'Authentication', 'docs/auth/README.md', 11],
 ];
 features.forEach(([slug, title, src, pos]) => {
-  write(`features/${slug}.md`, `sidebar_position: ${pos}\ntitle: ${title}`, `# ${title}\n\n${loadAndTransform(src)}`);
+  write(`features/${slug}.md`, `sidebar_position: ${pos}\ntitle: ${title}`, `# ${title}\n\n${loadAndTransform(src)}`, src);
 });
 
 writeRaw('features/embeddings/_category_.json', JSON.stringify({ label: 'Embeddings', position: 4 }, null, 2) + '\n');
@@ -483,6 +503,7 @@ write(
   'features/embeddings/overview.md',
   'sidebar_position: 1\ntitle: Overview',
   `# Embedding Inference\n\n${loadAndTransform('docs/embeddings/README.md')}`,
+  'docs/embeddings/README.md',
 );
 [
   ['candle', 'Candle (local SafeTensors)', 'docs/embeddings/candle/README.md'],
@@ -493,6 +514,7 @@ write(
     `features/embeddings/${slug}.md`,
     `sidebar_position: ${i + 2}\ntitle: ${title}`,
     `# ${title}\n\n${loadAndTransform(src)}`,
+    src,
   );
 });
 
@@ -501,6 +523,7 @@ write(
   'demos/overview.md',
   'sidebar_position: 1\ntitle: Overview',
   `# Worked Examples\n\n${detailsBlock('Worked examples & docs index')}`,
+  'README.md',
 );
 [
   ['llm-wiki', 'LLM Wiki Q&A', 'demo/llm_wiki/README.md'],
@@ -508,7 +531,7 @@ write(
   ['simple-backend', 'Simple Backend', 'demo/simple_backend/README.md'],
   ['movie-recommendation', 'Movie Recommendation', 'demo/movie_recommendation/README.md'],
 ].forEach(([slug, title, src], i) => {
-  write(`demos/${slug}.md`, `sidebar_position: ${i + 2}\ntitle: ${title}`, `# ${title}\n\n${loadAndTransform(src)}`);
+  write(`demos/${slug}.md`, `sidebar_position: ${i + 2}\ntitle: ${title}`, `# ${title}\n\n${loadAndTransform(src)}`, src);
 });
 
 // A 0.3.0-era page still links here by absolute path; absolute /docs/ links

@@ -32,7 +32,11 @@ const config = {
       ({
         docs: {
           sidebarPath: './sidebars.js',
-          editUrl: 'https://github.com/SkardiLabs/skardi/tree/main/website/',
+          // No site-wide editUrl. It pointed at skardi/website/, a path that
+          // has never existed in that repo, so every "Edit this page" link
+          // 404'd. Generated pages carry their own custom_edit_url pointing at
+          // the file they came from; frozen snapshots are not meant to be
+          // edited and so get no link at all.
           // The site tracks main. Tagged releases stay reachable in the
           // version dropdown; main is what a visitor lands on, so the docs
           // match the README rather than the last release.
