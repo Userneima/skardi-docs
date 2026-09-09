@@ -33,11 +33,14 @@ const config = {
         docs: {
           sidebarPath: './sidebars.js',
           editUrl: 'https://github.com/SkardiLabs/skardi/tree/main/website/',
-          lastVersion: '0.4.0',
+          lastVersion: '0.5.0',
           versions: {
             current: {
               label: 'Next',
               path: 'next',
+            },
+            '0.5.0': {
+              label: '0.5.0',
             },
             '0.4.0': {
               label: '0.4.0',
